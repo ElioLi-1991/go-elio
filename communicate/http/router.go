@@ -53,7 +53,13 @@ func (r *Router) Option(p string,h http.HandlerFunc) {
 	r.Handle(http.MethodOptions,p,h)
 }
 
-func (r *Router) 
+func (r *Router) Patch(p string,h http.HandlerFunc) {
+	r.Handle(http.MethodPatch,p,h)
+}
+
+func (r *Router) Trace(p string,h http.HandlerFunc) {
+	r.Handle(http.MethodTrace,p,h)
+}
 
 func (r *Router) Handle(method string,p string,f http.HandlerFunc) {
 	r.srv.router.HandleFunc(path.Join(r.prefix,p),f).Methods(method)
