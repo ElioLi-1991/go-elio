@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"go-elio/communicate"
 	"net"
 	"net/http"
@@ -51,7 +52,7 @@ type server struct {
 	tlsConfig *tls.Config
 	lister    net.Listener
 	timeout   time.Duration
-	router    *http.ServeMux
+	router    *mux.Router
 	network   string
 	address   string
 	err       error
@@ -63,12 +64,11 @@ func NewServer(options ...ServerOption) *server {
 		network: "tcp",
 		address: ":0",
 		timeout: 1 * time.Second,
-		router:  http.NewServeMux(),
+		router : mux.NewRouter(),
 	}
 	for _, o := range options {
 		o(srv)
 	}
-
 	srv.Server = &http.Server{
 		Handler:   srv.router,
 		TLSConfig: srv.tlsConfig,
@@ -76,16 +76,14 @@ func NewServer(options ...ServerOption) *server {
 	return srv
 }
 
-// HandleFunc register handle
-func (s *server) HandleFunc(h HandleFunc) {
-	s.router.HandleFunc(h.Path, h.Func)
+// create a new route
+func (s *server) Route(prefix string) *Router {
+	return newRouter(prefix,s)
 }
 
-// HandleFuncComplex register handle complex
-func (s *server) HandleFuncComplex(hc HandleFuncComplex) {
-	for _, h := range hc {
-		s.router.HandleFunc(h.Path, h.Func)
-	}
+// HandleFunc register handle
+func (s *server) HandleFunc(p string,f http.HandlerFunc) {
+	s.router.HandleFunc(p, f)
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

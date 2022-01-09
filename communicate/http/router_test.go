@@ -3,33 +3,26 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
-	"github.com/go-kratos/kratos/v2"
 	"time"
 )
 
-
-func a() {
-	a := kratos.New()
-	fmt.Println(a)
-}
-
-
-func TestNewServer(t *testing.T) {
+func TestRouter(t *testing.T) {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(r.RequestURI)
 	}
+	srv := NewServer()
+	r := srv.Route("/index")
+	rGroup := r.Group("/User")
+	rGroup.Get("/GetUser", fn)
+	rGroup.Get("/GetList", fn)
 	ctx := context.Background()
-	s := NewServer()
-	s.HandleFunc("/index", fn)
-	s.HandleFunc("/index/{id:[0-9]+}", fn)
 	go func() {
-		if err := s.Start(ctx); err != nil {
+		if err := srv.Start(ctx); err != nil {
 			panic(err)
 		}
 	}()
 	time.Sleep(time.Second)
-	s.Stop(ctx)
+	srv.Stop(ctx)
 }
