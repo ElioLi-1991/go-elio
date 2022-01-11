@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"go-elio/communicate"
+	"go-elio/internal/endpoint"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -53,6 +55,7 @@ type server struct {
 	lister    net.Listener
 	timeout   time.Duration
 	router    *mux.Router
+	endpoint  *url.URL
 	network   string
 	address   string
 	err       error
@@ -90,6 +93,13 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
+func (s *server) EndPoint() (*url.URL,error){
+	if s.err != nil {
+		return nil,s.err
+	}
+	return s.endpoint,nil
+}
+
 // Start start http server
 func (s *server) Start(ctx context.Context) error {
 	if err := s.registerLister(); err != nil {
@@ -121,6 +131,7 @@ func (s *server) registerLister() error {
 			return err
 		}
 	}
+	s.endpoint = endpoint.NewEndpoint("http",s.lister.Addr().String(),s.tlsConfig!=nil)
 	return nil
 }
 
