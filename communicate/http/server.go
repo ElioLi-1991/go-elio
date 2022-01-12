@@ -64,7 +64,7 @@ func NewServer(options ...ServerOption) *server {
 		network: "tcp",
 		address: ":0",
 		timeout: 1 * time.Second,
-		router : mux.NewRouter(),
+		router:  mux.NewRouter(),
 	}
 	for _, o := range options {
 		o(srv)
@@ -78,11 +78,11 @@ func NewServer(options ...ServerOption) *server {
 
 // create a new route
 func (s *server) Route(prefix string) *Router {
-	return newRouter(prefix,s)
+	return newRouter(prefix, s)
 }
 
 // HandleFunc register handle
-func (s *server) HandleFunc(p string,f http.HandlerFunc) {
+func (s *server) HandleFunc(p string, f http.HandlerFunc) {
 	s.router.HandleFunc(p, f)
 }
 
