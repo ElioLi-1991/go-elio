@@ -14,6 +14,7 @@ import (
 
 var (
 	_ communicate.Server = (*server)(nil)
+	_ communicate.EndPointer = (*server)(nil)
 )
 
 type ServerOption func(*server)
@@ -77,6 +78,8 @@ func NewServer(options ...ServerOption) *server {
 	for _,o := range options {
 		o(srv)
 	}
+	srv.Server = grpc.NewServer()
+	srv.err = srv.listenerAndEndpoint()
 	return srv
 }
 
@@ -92,6 +95,13 @@ func (s *server) listenerAndEndpoint() error {
 	return nil
 }
 
+func (s *server) EndPoint() (*url.URL,error) {
+	if s.err != nil {
+		return nil,s.err
+	}
+	return s.endpoint,nil
+}
+
 func (s *server) Start(ctx context.Context) error {
 	if s.err != nil {
 		return s.err
@@ -102,6 +112,6 @@ func (s *server) Start(ctx context.Context) error {
 
 func (s *server) Stop(ctx context.Context) error {
 	s.GracefulStop()
-	s.logger.Info("[gRpc] server is stop")
+	s.logger.Info("[gRPC] server is stop")
 	return nil
 }

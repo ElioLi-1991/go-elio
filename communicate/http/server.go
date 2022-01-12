@@ -16,6 +16,7 @@ import (
 
 var (
 	_ communicate.Server = (*server)(nil)
+	_ communicate.EndPointer = (*server)(nil)
 )
 
 type ServerOption func(*server)

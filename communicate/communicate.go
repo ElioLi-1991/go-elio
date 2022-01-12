@@ -6,7 +6,7 @@ import (
 )
 
 type EndPointer interface {
-	Endpoint() (*url.URL, error)
+	EndPoint() (*url.URL, error)
 }
 
 type Server interface {
