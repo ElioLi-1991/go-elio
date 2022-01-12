@@ -3,18 +3,10 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
-	"github.com/go-kratos/kratos/v2"
 	"time"
 )
-
-
-func a() {
-	a := kratos.New()
-	fmt.Println(a)
-}
 
 
 func TestNewServer(t *testing.T) {

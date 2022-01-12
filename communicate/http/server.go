@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"github.com/gorilla/mux"
 	"go-elio/communicate"
 	"go-elio/internal/endpoint"
+	"go-elio/logger"
 	"net"
 	"net/http"
 	"net/url"
@@ -48,6 +48,12 @@ func Timeout(time time.Duration) ServerOption {
 	}
 }
 
+func Logger(h *logger.Helper) ServerOption {
+	return func(s *server) {
+		s.logger = h
+	}
+}
+
 // http server struct interface by communicate.Server
 type server struct {
 	*http.Server
@@ -56,6 +62,7 @@ type server struct {
 	timeout   time.Duration
 	router    *mux.Router
 	endpoint  *url.URL
+	logger    *logger.Helper
 	network   string
 	address   string
 	err       error
@@ -67,7 +74,8 @@ func NewServer(options ...ServerOption) *server {
 		network: "tcp",
 		address: ":0",
 		timeout: 1 * time.Second,
-		router : mux.NewRouter(),
+		router:  mux.NewRouter(),
+		logger: logger.NewHelper(logger.DefaultLogger),
 	}
 	for _, o := range options {
 		o(srv)
@@ -81,11 +89,11 @@ func NewServer(options ...ServerOption) *server {
 
 // create a new route
 func (s *server) Route(prefix string) *Router {
-	return newRouter(prefix,s)
+	return newRouter(prefix, s)
 }
 
 // HandleFunc register handle
-func (s *server) HandleFunc(p string,f http.HandlerFunc) {
+func (s *server) HandleFunc(p string, f http.HandlerFunc) {
 	s.router.HandleFunc(p, f)
 }
 
@@ -102,13 +110,13 @@ func (s *server) EndPoint() (*url.URL,error){
 
 // Start start http server
 func (s *server) Start(ctx context.Context) error {
-	if err := s.registerLister(); err != nil {
+	if err := s.listerAndEndpoint(); err != nil {
 		return err
 	}
 	s.BaseContext = func(net.Listener) context.Context {
 		return ctx
 	}
-	fmt.Printf("[HTTP] server is starting on addr %s", s.lister.Addr().String())
+	s.logger.Infof("[HTTP] server is starting on addr %s", s.lister.Addr().String())
 	var err error
 	if s.tlsConfig != nil {
 		err = s.ServeTLS(s.lister, "", "")
@@ -123,7 +131,7 @@ func (s *server) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) registerLister() error {
+func (s *server) listerAndEndpoint() error {
 	if s.lister == nil {
 		var err error
 		s.lister, err = net.Listen(s.network, s.address)
@@ -137,6 +145,6 @@ func (s *server) registerLister() error {
 
 // Stop the server
 func (s *server) Stop(ctx context.Context) error {
-	fmt.Println("[HTTP] server is stop")
+	s.logger.Info("[HTTP] server is stop")
 	return s.Shutdown(ctx)
 }
